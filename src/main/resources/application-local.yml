@@ -1,0 +1,76 @@
+# =============================================================================
+# Configuração LocalStack - oficina-os-service
+# Profile: local
+# Uso: mvn spring-boot:run -Dspring-boot.run.profiles=local
+# =============================================================================
+
+spring:
+  application:
+    name: os-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/os_db
+    username: postgres
+    password: postgres123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+# JWT Configuration
+jwt:
+  secret: base64EncodedSecretKeyWithMinimumOf256BitsForHS256SigningAlgorithm
+  expiration:
+    ms: 3600000
+
+# Security (disabled for local testing)
+security:
+  disabled: true
+
+# AWS LocalStack Configuration
+aws:
+  region: us-east-1
+  endpoint: http://localhost:4566
+  sqs:
+    os-events-queue: http://localhost:4566/000000000000/os-events-queue
+    execution-events-queue: http://localhost:4566/000000000000/execution-events-queue
+    billing-events-queue: http://localhost:4566/000000000000/billing-events-queue
+
+spring.cloud.aws:
+  endpoint: http://localhost:4566
+  region:
+    static: us-east-1
+  credentials:
+    access-key: test
+    secret-key: test
+  sqs:
+    endpoint: http://localhost:4566
+
+# Server
+server:
+  port: 8085
+
+# Logging (mais detalhado para debug)
+logging:
+  level:
+    root: INFO
+    br.com.grupo99.osservice: DEBUG
+    io.awspring.cloud: DEBUG
+    software.amazon.awssdk: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

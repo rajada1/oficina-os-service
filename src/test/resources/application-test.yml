@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: os-service-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+
+  flyway:
+    enabled: false
+
+  # Kafka Test Configuration (Embedded Kafka)
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+    consumer:
+      group-id: os-service-test-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      ack-mode: manual
+
+  cloud:
+    aws:
+      sqs:
+        enabled: false
+
+# Disable AWS (legacy)
+aws:
+  region: us-east-1
+  sqs:
+    os-events-queue: test-queue
+    execution-events-queue: test-queue
+    billing-events-queue: test-queue
+
+# Server
+server:
+  port: 0
+
+# Resilience4j Configuration for Tests (disabled to avoid interference)
+resilience4j:
+  circuitbreaker:
+    instances:
+      kafkaPublisher:
+        registerHealthIndicator: false
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 1s
+        failureRateThreshold: 90
+  retry:
+    instances:
+      kafkaPublisher:
+        maxAttempts: 1
+        waitDuration: 100ms
+  timelimiter:
+    instances:
+      kafkaPublisher:
+        timeoutDuration: 30s
+        cancelRunningFuture: false
