@@ -72,11 +72,6 @@ jwt:
 # AWS Configuration
 aws:
   region: ${AWS_REGION:us-east-1}
-  sqs:
-    os-events-queue: ${OS_EVENTS_QUEUE_URL}
-    execution-events-queue: ${EXECUTION_EVENTS_QUEUE_URL}
-    billing-events-queue: ${BILLING_EVENTS_QUEUE_URL}
-
 # Server
 server:
   port: ${SERVER_PORT:8081}
