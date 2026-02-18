@@ -6,6 +6,7 @@ import br.com.grupo99.osservice.domain.repository.OrdemServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class OrdemServicoRepositoryAdapter implements OrdemServicoRepository {
 
     private final JpaOrdemServicoRepository jpaRepository;
@@ -35,17 +37,20 @@ public class OrdemServicoRepositoryAdapter implements OrdemServicoRepository {
 
     @Override
     public Page<OrdemServico> findByStatus(StatusOS status, Pageable pageable) {
-        return jpaRepository.findAll(pageable); // Simplified for now
+        return jpaRepository.findByStatus(status, pageable);
     }
 
     @Override
     public Page<OrdemServico> findByClienteId(UUID clienteId, Pageable pageable) {
-        return jpaRepository.findAll(pageable); // Simplified for now
+        return jpaRepository.findByClienteId(clienteId, pageable);
     }
 
     @Override
     public List<OrdemServico> findByStatusIn(List<StatusOS> statuses) {
-        return jpaRepository.findAll(); // Simplified for now
+        // Implementação simplificada, idealmente adicionar método no JpaRepository
+        return jpaRepository.findAll().stream()
+                .filter(os -> statuses.contains(os.getStatus()))
+                .toList();
     }
 
     @Override

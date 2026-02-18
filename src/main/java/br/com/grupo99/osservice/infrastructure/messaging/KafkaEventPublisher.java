@@ -7,7 +7,6 @@ import br.com.grupo99.osservice.infrastructure.config.KafkaConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -42,11 +41,9 @@ public class KafkaEventPublisher implements EventPublisherPort {
     private static final String CIRCUIT_BREAKER_NAME = "kafkaPublisher";
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final ObjectMapper objectMapper;
 
     public KafkaEventPublisher(KafkaTemplate<String, Object> kafkaTemplate, ObjectMapper objectMapper) {
         this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
     }
 
     /**

@@ -5,7 +5,7 @@ import br.com.grupo99.osservice.application.events.OSCriadaEvent;
 import br.com.grupo99.osservice.domain.model.OrdemServico;
 import br.com.grupo99.osservice.domain.model.StatusOS;
 import br.com.grupo99.osservice.domain.repository.OrdemServicoRepository;
-import br.com.grupo99.osservice.infrastructure.messaging.EventPublisher;
+import br.com.grupo99.osservice.infrastructure.messaging.EventPublisherPort;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.Então;
@@ -13,8 +13,7 @@ import io.cucumber.java.pt.Quando;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -33,11 +32,14 @@ public class SagaPatternSteps {
     @Autowired
     private OrdemServicoRepository ordemServicoRepository;
 
-    @SpyBean
-    private EventPublisher eventPublisher;
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private org.springframework.kafka.core.KafkaAdmin kafkaAdmin;
 
-    @MockBean
-    private software.amazon.awssdk.services.sqs.SqsClient sqsClient;
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private EventPublisherPort eventPublisher;
 
     private OrdemServico ordemServico;
     private UUID osId;
@@ -53,8 +55,8 @@ public class SagaPatternSteps {
 
     @Dado("as filas SQS estão configuradas")
     public void asFilasSqsEstaoConfiguradas() {
-        // Mock das filas SQS
-        assertNotNull(sqsClient);
+        // Kafka is now used instead of SQS
+        assertNotNull(eventPublisher);
     }
 
     @Dado("que um cliente solicita um serviço")
@@ -333,7 +335,7 @@ public class SagaPatternSteps {
 
     @Dado("que existe um evento {string} na fila")
     public void queExisteUmEventoNaFila(String nomeEvento) {
-        assertNotNull(sqsClient);
+        assertNotNull(eventPublisher);
     }
 
     @Quando("ocorre uma falha temporária ao processar o evento")
@@ -355,7 +357,7 @@ public class SagaPatternSteps {
     @Então("o evento deve ir para a Dead Letter Queue")
     public void oEventoDeveIrParaADeadLetterQueue() {
         // Configuração do SQS
-        assertNotNull(sqsClient);
+        assertNotNull(eventPublisher);
     }
 
     @Então("um alerta crítico deve ser gerado")

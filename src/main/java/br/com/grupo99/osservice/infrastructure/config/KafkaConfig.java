@@ -3,7 +3,6 @@ package br.com.grupo99.osservice.infrastructure.config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -32,6 +31,7 @@ import java.util.Map;
 @Slf4j
 @Configuration
 @EnableKafka
+@SuppressWarnings("null")
 public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")

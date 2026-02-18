@@ -4,7 +4,7 @@ import br.com.grupo99.osservice.application.events.OSCanceladaEvent;
 import br.com.grupo99.osservice.application.events.OSCriadaEvent;
 import br.com.grupo99.osservice.application.events.StatusMudadoEvent;
 import br.com.grupo99.osservice.infrastructure.config.KafkaConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
+
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -44,20 +44,13 @@ import static org.assertj.core.api.Assertions.assertThat;
         KafkaConfig.TOPIC_OS_EVENTS,
         KafkaConfig.TOPIC_BILLING_EVENTS,
         KafkaConfig.TOPIC_EXECUTION_EVENTS
-}, brokerProperties = {
-        "listeners=PLAINTEXT://localhost:9093",
-        "port=9093"
 })
+@org.springframework.test.context.TestPropertySource(properties = {
+        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}" })
 class KafkaEventPublisherTest {
 
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
-
-    @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Autowired
     private EventPublisherPort eventPublisher; // Usar o bean do Spring com Resilience4j

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +22,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 @DisplayName("OrdemServicoRepository - Testes de Integração")
 class OrdemServicoRepositoryTest {
-
-    @MockBean
-    private software.amazon.awssdk.services.sqs.SqsClient sqsClient;
 
     @Autowired
     private OrdemServicoRepository repository;

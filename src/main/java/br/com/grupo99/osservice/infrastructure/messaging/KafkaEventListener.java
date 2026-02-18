@@ -4,7 +4,7 @@ import br.com.grupo99.osservice.domain.model.OrdemServico;
 import br.com.grupo99.osservice.domain.model.StatusOS;
 import br.com.grupo99.osservice.domain.repository.OrdemServicoRepository;
 import br.com.grupo99.osservice.infrastructure.config.KafkaConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -32,16 +32,10 @@ import java.util.UUID;
 public class KafkaEventListener {
 
     private final OrdemServicoRepository ordemServicoRepository;
-    private final ObjectMapper objectMapper;
-    private final EventPublisherPort eventPublisher;
 
     public KafkaEventListener(
-            OrdemServicoRepository ordemServicoRepository,
-            ObjectMapper objectMapper,
-            EventPublisherPort eventPublisher) {
+            OrdemServicoRepository ordemServicoRepository) {
         this.ordemServicoRepository = ordemServicoRepository;
-        this.objectMapper = objectMapper;
-        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -266,7 +260,7 @@ public class KafkaEventListener {
                 record.key(),
                 e.getMessage());
 
-        // TODO: Implementar envio para Dead Letter Topic
-        // kafkaTemplate.send("dlt-" + record.topic(), record.key(), record.value());
+        // Re-throw exception to trigger Dead Letter Topic configured in KafkaConfig
+        throw new RuntimeException(e);
     }
 }

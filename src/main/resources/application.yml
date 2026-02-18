@@ -65,7 +65,7 @@ spring:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:base64EncodedSecretKeyWithMinimumOf256BitsForHS256SigningAlgorithm}
+  secret: ${JWT_SECRET:YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkwYWJjZGVmZw==}
   expiration:
     ms: ${JWT_EXPIRATION_MS:3600000}
 
