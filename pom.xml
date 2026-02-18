@@ -23,35 +23,23 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <aws-java-sdk.version>2.20.26</aws-java-sdk.version>
         <cucumber.version>7.15.0</cucumber.version>
-        <!-- SonarQube -->
-        <sonar.projectKey>grupo99-oficina-os-service</sonar.projectKey>
-        <sonar.organization>grupo99</sonar.organization>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.login>${env.SONAR_TOKEN}</sonar.login>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
 
-        <!-- Spring Boot Starters -->
+        <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- Spring Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
 
-        <!-- PostgreSQL Driver -->
+        <!-- PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -109,6 +97,19 @@
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-api</artifactId>
             <version>8.8.0</version>
+        </dependency>
+
+        <!-- AWS SQS -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+            <version>${aws-java-sdk.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <!-- Micrometer para métricas -->
@@ -271,13 +272,6 @@
                 </configuration>
             </plugin>
 
-            <!-- SonarQube Scanner -->
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.9.1.2184</version>
-            </plugin>
-
             <!-- JaCoCo para cobertura de testes -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -307,7 +301,7 @@
                                     <element>BUNDLE</element>
                                     <limits>
                                         <limit>
-                                            <counter>LINE</counter>
+                                            <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
                                             <minimum>0.80</minimum>
                                         </limit>
@@ -321,8 +315,6 @@
                     <excludes>
                         <exclude>**/*Application.class</exclude>
                         <exclude>**/domain/repository/*.class</exclude>
-                        <exclude>**/infrastructure/config/*.class</exclude>
-                        <exclude>**/infrastructure/security/*.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>
