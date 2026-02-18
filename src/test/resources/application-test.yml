@@ -54,6 +54,16 @@ aws:
     execution-events-queue: test-queue
     billing-events-queue: test-queue
 
+# JWT Configuration for tests
+jwt:
+  secret: dGVzdC1zZWNyZXQta2V5LXdpdGgtbWluaW11bS0yNTYtYml0cy1mb3ItaHMyNTYtc2lnbmluZw==
+  expiration:
+    ms: 3600000
+
+# Security
+security:
+  disabled: false
+
 # Server
 server:
   port: 0
