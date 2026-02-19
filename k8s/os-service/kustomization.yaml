@@ -2,12 +2,18 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ./os-service
-
-namespace: os-service
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - ingress.yaml
 
 commonLabels:
   app: os-service
   app.kubernetes.io/name: os-service
   app.kubernetes.io/component: backend
   app.kubernetes.io/part-of: oficina-system
+
+namespace: os-service
