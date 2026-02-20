@@ -22,7 +22,6 @@ env:
   ECR_REPOSITORY: os-service
   EKS_CLUSTER_NAME: tech-challenge-cluster
   JAVA_VERSION: "21"
-  K8S_INFRA_REPO: "tech_challenge_k8s_infra"
   SERVICE_NAME: "os-service"
 
 jobs:
@@ -90,6 +89,7 @@ jobs:
     name: Build and Push Docker Image
     needs: test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
     outputs:
@@ -151,17 +151,13 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy to Dev
+    name: Deploy to EKS
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout K8s Infra Repository
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          repository: rajada1/${{ env.K8S_INFRA_REPO }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: k8s-infra
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -174,39 +170,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Retrieve Secrets from SSM
-        id: ssm
-        run: |
-          echo "Retrieving parameters from SSM..."
-          ENVIRONMENT=${{ github.event.inputs.environment || 'dev' }}
-
-          # Database credentials
-          DB_ENDPOINT=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/os-service-db/endpoint" --query "Parameter.Value" --output text)
-          DB_HOST=${DB_ENDPOINT%:*}
-          DB_PORT=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/os-service-db/port" --query "Parameter.Value" --output text)
-          DB_NAME=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/os-service-db/name" --query "Parameter.Value" --output text)
-
-          # EKS Cluster Name
-          EKS_CLUSTER_NAME=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/eks/cluster_name" --query "Parameter.Value" --output text 2>/dev/null || echo "${{ env.EKS_CLUSTER_NAME }}")
-
-          # Secure credentials
-          DB_USER=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/os-service-db/username" --with-decryption --query "Parameter.Value" --output text)
-          DB_PASS=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/os-service-db/password" --with-decryption --query "Parameter.Value" --output text)
-
-          # Mask secrets
-          echo "::add-mask::$DB_USER"
-          echo "::add-mask::$DB_PASS"
-
-          # Export to environment
-          echo "DB_HOST=$DB_HOST" >> $GITHUB_ENV
-          echo "DB_PORT=$DB_PORT" >> $GITHUB_ENV
-          echo "DB_NAME=$DB_NAME" >> $GITHUB_ENV
-          echo "DB_USER=$DB_USER" >> $GITHUB_ENV
-          echo "DB_PASS=$DB_PASS" >> $GITHUB_ENV
-          echo "EKS_CLUSTER_NAME=$EKS_CLUSTER_NAME" >> $GITHUB_ENV
-
-          echo "Secrets retrieved successfully."
-
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig \
@@ -217,32 +180,28 @@ jobs:
         run: |
           kubectl create namespace ${{ env.SERVICE_NAME }} --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create/Update Secrets with Database Credentials
+      - name: Create/Update Secrets
         run: |
           kubectl create secret generic os-service-secrets \
-            --from-literal=DB_HOST='${{ env.DB_HOST }}' \
-            --from-literal=DB_PORT='${{ env.DB_PORT }}' \
-            --from-literal=DB_NAME='${{ env.DB_NAME }}' \
-            --from-literal=DB_USERNAME='${{ env.DB_USER }}' \
-            --from-literal=DB_PASSWORD='${{ env.DB_PASS }}' \
+            --from-literal=DB_HOST='${{ secrets.DB_HOST }}' \
+            --from-literal=DB_PORT='${{ secrets.DB_PORT }}' \
+            --from-literal=DB_NAME='${{ secrets.DB_NAME }}' \
+            --from-literal=DB_USERNAME='${{ secrets.DB_USERNAME }}' \
+            --from-literal=DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
             --from-literal=JWT_SECRET='${{ secrets.JWT_SECRET }}' \
             --from-literal=NEW_RELIC_LICENSE_KEY='${{ secrets.NEW_RELIC_LICENSE_KEY }}' \
+            --from-literal=KAFKA_BOOTSTRAP_SERVERS='${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}' \
             --namespace=${{ env.SERVICE_NAME }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy to EKS
         run: |
-          cd k8s-infra/microservices/os-service
+          kubectl apply -k k8s/os-service/ -n ${{ env.SERVICE_NAME }}
 
-          # Apply all manifests
-          kubectl apply -k . -n ${{ env.SERVICE_NAME }}
-
-          # Update image with correct tag
           kubectl set image deployment/os-service-deployment \
             os-service=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
             -n ${{ env.SERVICE_NAME }}
 
-          # Force imagePullPolicy to Always
           kubectl patch deployment os-service-deployment -n ${{ env.SERVICE_NAME }} \
             -p '{"spec":{"template":{"spec":{"containers":[{"name":"os-service","imagePullPolicy":"Always"}]}}}}'
 
@@ -287,17 +246,15 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          ENVIRONMENT=${{ github.event.inputs.environment || 'dev' }}
-          CLUSTER=$(aws ssm get-parameter --name "/microservices/$ENVIRONMENT/eks/cluster_name" --query "Parameter.Value" --output text 2>/dev/null || echo "${{ env.EKS_CLUSTER_NAME }}")
-          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $CLUSTER
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
 
       - name: Rollback deployment
         run: |
-          echo "🔄 Rolling back deployment..."
+          echo "Rolling back deployment..."
           kubectl rollout undo deployment/os-service-deployment -n ${{ env.SERVICE_NAME }}
           kubectl rollout status deployment/os-service-deployment -n ${{ env.SERVICE_NAME }} --timeout=5m
 
       - name: Verify rollback
         run: |
-          echo "✅ Rollback completed"
+          echo "Rollback completed"
           kubectl get pods -n ${{ env.SERVICE_NAME }}
